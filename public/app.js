@@ -1,3 +1,4 @@
+import { createDemoStory } from "./demo-story.js";
 const form = document.querySelector("#story-form");
 const pages = document.querySelector("#pages");
 const title = document.querySelector("#book-title");
@@ -11,9 +12,14 @@ form.addEventListener("submit", async event => {
   title.textContent = "Criando sua aventura...";
   const data = Object.fromEntries(new FormData(form));
   try {
-    const response = await fetch("/api/story", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(data) });
-    const book = await response.json();
-    if (!response.ok) throw new Error(book.error || "Falha na geração");
+    const book = location.hostname.endsWith("github.io")
+      ? createDemoStory(data)
+      : await (async () => {
+          const response = await fetch("./api/story", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(data) });
+          const value = await response.json();
+          if (!response.ok) throw new Error(value.error || "Falha na geração");
+          return value;
+        })();
     title.textContent = book.title;
     book.pages.forEach((page, index) => {
       const section = document.createElement("section");
